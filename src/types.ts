@@ -59,6 +59,26 @@ export interface EvolutionTraits {
   vitality: number; // Max health bonus
 }
 
+export interface CityResources {
+  wheat: number;
+  stone: number;
+  iron: number;
+  gold: number;
+  bread: number;
+  wood: number;
+  meat: number;
+}
+
+export interface CityStats {
+  births: number;
+  deaths: number;
+  age: number;
+  infected: number;
+  culture: string;
+  leader: string;
+  kingdom: string;
+}
+
 export interface City {
   id: string;
   name: string;
@@ -66,12 +86,13 @@ export interface City {
   x: number;
   y: number;
   population: number;
-  resources: number;
   wealth: number;
   tradeVolume: number;
   techLevel: number;
   level: number;
   era: Era;
+  resources: CityResources;
+  stats: CityStats;
 }
 
 export enum FleetType {

@@ -223,16 +223,78 @@ export class Engine {
     return agents;
   }
 
-  static updateCity(city: City, tick: number): { city: City, event?: HistoryEvent } {
-    const newCity = { ...city };
+  static generateName(species: SpeciesType): string {
+    const names: Record<string, string[]> = {
+      [SpeciesType.HUMANS]: ['Mysh', 'Iva', 'Aldrin', 'Sera', 'Brum', 'Kael'],
+      [SpeciesType.ORCS]: ['Grom', 'Throk', 'Mok', 'Garak', 'Ursh', 'Zul'],
+      [SpeciesType.ELVES]: ['Luthil', 'Aeris', 'Faen', 'Thal', 'Relan', 'Yuvil'],
+      [SpeciesType.DWARFS]: ['Thorin', 'Gloin', 'Bari', 'Durin', 'Kili', 'Fili'],
+    };
+    const list = names[species] || ['Nadie'];
+    return list[Math.floor(Math.random() * list.length)] + `(${Math.floor(Math.random()*100)})`;
+  }
+
+  static generateCulture(species: SpeciesType): string {
+    const cultures: Record<string, string[]> = {
+      [SpeciesType.HUMANS]: ['Riru', 'Solaris', 'Nordia', 'Arath'],
+      [SpeciesType.ORCS]: ['Colmillo', 'Sangre', 'Hierro', 'Ceniza'],
+      [SpeciesType.ELVES]: ['Estelar', 'Floral', 'Ancestral', 'Místico'],
+      [SpeciesType.DWARFS]: ['Montaña', 'Forja', 'Piedra', 'Oro'],
+    };
+    const list = cultures[species] || ['Común'];
+    return list[Math.floor(Math.random() * list.length)] + `[${Math.floor(Math.random()*1000)}]`;
+  }
+
+  static updateCity(city: City, tick: number, grid: Biome[][]): { city: City, event?: HistoryEvent } {
+    const newCity = { ...city, resources: { ...city.resources }, stats: { ...city.stats } };
     let event: HistoryEvent | undefined = undefined;
+
+    // 1. Demographics & Time
+    newCity.stats.age += 1;
+    if (tick % 50 === 0) {
+       // Natural growth
+       const births = Math.floor(newCity.population * 0.05) + 1;
+       newCity.stats.births += births;
+       newCity.population += births;
+
+       const deaths = Math.floor(newCity.population * 0.02);
+       newCity.stats.deaths += deaths;
+       newCity.population -= deaths;
+    }
+
+    // 2. Resource Gathering (Terrain Aware)
+    const radius = 3;
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const tx = Math.floor(newCity.x + dx);
+        const ty = Math.floor(newCity.y + dy);
+        if (tx >= 0 && tx < grid[0].length && ty >= 0 && ty < grid.length) {
+          const b = grid[ty][tx];
+          if (Math.random() < 0.02) {
+             if (b === Biome.GRASS) newCity.resources.wheat += 1;
+             if (b === Biome.MOUNTAIN) newCity.resources.stone += 1;
+             if (b === Biome.FOREST) newCity.resources.wood += 1;
+             if (b === Biome.MOUNTAIN && Math.random() < 0.1) newCity.resources.iron += 1;
+             newCity.resources.meat += 0.2;
+          }
+        }
+      }
+    }
+
+    // 3. Economy & Production
+    if (newCity.resources.wheat >= 5) {
+      const bakeCount = Math.floor(newCity.resources.wheat / 5);
+      newCity.resources.wheat -= bakeCount * 5;
+      newCity.resources.bread += bakeCount;
+    }
+    newCity.resources.gold = Math.floor(newCity.wealth / 10);
 
     // Capitalist growth requirements
     const nextLevelReq = {
       pop: city.level * 15,
       wealth: city.level * 100 * Math.pow(2, city.level - 1)
     };
-
+    
     if (newCity.population >= nextLevelReq.pop && newCity.wealth >= nextLevelReq.wealth) {
       newCity.level += 1;
       newCity.wealth -= nextLevelReq.wealth * 0.5;
@@ -477,12 +539,23 @@ export class Engine {
           x: newAgent.x,
           y: newAgent.y,
           population: 1,
-          resources: 0,
           wealth: 100,
           tradeVolume: 0,
           techLevel: 1,
           level: 1,
-          era: Era.TRIBAL
+          era: Era.TRIBAL,
+          resources: {
+            wheat: 5, stone: 0, iron: 0, gold: 50, bread: 10, wood: 10, meat: 5
+          },
+          stats: {
+            births: 1,
+            deaths: 0,
+            age: 0,
+            infected: 0,
+            leader: this.generateName(agent.species),
+            culture: this.generateCulture(agent.species),
+            kingdom: `El Gran Reino de ${cityName}`
+          }
         };
         newAgent.cityId = createdCity.id;
         event = {

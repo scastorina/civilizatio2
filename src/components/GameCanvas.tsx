@@ -14,11 +14,14 @@ interface GameCanvasProps {
   fleets: Fleet[];
   tradeRoutes: TradeRoute[];
   onTileClick: (x: number, y: number) => void;
+  onCityClick: (city: City | null) => void;
+  selectedCityId: string | null;
   editorActive: boolean;
   interventionActive: boolean;
+  inspectActive: boolean;
 }
 
-export const GameCanvas: React.FC<GameCanvasProps> = ({ grid, agents, cities, fleets, tradeRoutes, onTileClick, editorActive, interventionActive }) => {
+export const GameCanvas: React.FC<GameCanvasProps> = ({ grid, agents, cities, fleets, tradeRoutes, onTileClick, onCityClick, selectedCityId, editorActive, interventionActive, inspectActive }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapRef = useRef<HTMLCanvasElement>(null);
@@ -255,6 +258,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ grid, agents, cities, fl
       // Architecture
       ctx.save();
       ctx.translate(cx, cy);
+
+      // SELECTION HIGHLIGHT
+      if (selectedCityId === city.id) {
+          ctx.save();
+          ctx.strokeStyle = '#facc15'; ctx.lineWidth = 4;
+          ctx.setLineDash([8, 4]);
+          ctx.beginPath(); ctx.arc(0, 0, territoryRadius + 15, 0, Math.PI*2); ctx.stroke();
+          ctx.restore();
+      }
+
       const cityDensity = 5 + level * 3;
       for (let i = 0; i < cityDensity; i++) {
         const d = (0.15 + nextR() * 0.75) * territoryRadius * 0.4;
@@ -387,13 +400,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ grid, agents, cities, fl
   }, [render]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const mx = (e.clientX - rect.left - camera.x) / camera.zoom;
+    const my = (e.clientY - rect.top - camera.y) / camera.zoom;
+    const tx = Math.floor(mx / TILE_SIZE);
+    const ty = Math.floor(my / TILE_SIZE);
+
+    if (inspectActive) {
+       // Find clicked city
+       const clickedCity = cities.find(c => Math.abs(c.x - tx) <= 1 && Math.abs(c.y - ty) <= 1);
+       if (clickedCity) {
+           onCityClick(clickedCity);
+           return;
+       } else {
+           onCityClick(null);
+       }
+    }
+
     if (editorActive || interventionActive) {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (rect) {
-        const mx = (e.clientX - rect.left - camera.x) / camera.zoom;
-        const my = (e.clientY - rect.top - camera.y) / camera.zoom;
-        onTileClick(Math.floor(mx / TILE_SIZE), Math.floor(my / TILE_SIZE));
-      }
+        onTileClick(tx, ty);
     } else {
       setIsDragging(true);
       setLastMouse({ x: e.clientX, y: e.clientY });

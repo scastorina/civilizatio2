@@ -12,11 +12,113 @@ import {
   Play, Pause, RefreshCw, Save, FolderOpen, 
   Settings, ScrollText, UserPlus,
   Mountain, Users, Zap, Microscope,
-  Eraser, Flame, Undo2, LogOut, Info
+  Eraser, Flame, Undo2, LogOut, Info,
+  X, Briefcase, Heart, Skull, Biohazard, Clock, Baby,
+  Coins, Gem, Beef, Wheat, HardHat, Pickaxe,
+  Hammer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type ToolCategory = 'terrain' | 'life' | 'powers' | 'inspect' | 'settings' | null;
+
+// City Inspector Modal Matching the Screenshot
+const CityInspector = ({ city, onClose }: { city: City, onClose: () => void }) => {
+  if (!city) return null;
+  const spec = SPECIES_SPECS[city.species];
+  
+  const ResourceItem = ({ icon: Icon, value, color }: any) => (
+    <div className="flex items-center gap-1">
+      <Icon size={14} className={color} />
+      <span className="text-[10px] font-bold font-mono">{Math.floor(value)}</span>
+    </div>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: 20 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+    >
+      <div className="w-[420px] bg-[#3a3a3a] border-[4px] border-[#222] rounded-[32px] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] relative">
+        {/* Header */}
+        <div className="bg-[#4a4a4a] p-4 flex justify-between items-center border-b-[4px] border-[#222]">
+           <div className="flex-1 text-center">
+              <span className="bg-black/40 px-6 py-1 rounded-lg text-yellow-500 font-black uppercase tracking-[0.2em] shadow-inner border border-white/5">
+                {city.name}
+              </span>
+           </div>
+           <button onClick={onClose} className="bg-red-600 p-1 rounded-lg border-2 border-[#111] hover:bg-red-500">
+              <X size={20} className="text-white" />
+           </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+           {/* Top Stats Row */}
+           <div className="flex justify-evenly items-center gap-2">
+              <div className="flex flex-col items-center gap-1 bg-black/20 p-2 rounded-xl flex-1 border border-white/5">
+                 <Users size={18} className="text-blue-400" />
+                 <span className="text-xs font-black text-blue-300">{city.population}</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 bg-black/20 p-2 rounded-xl flex-1 border border-white/5">
+                 <Briefcase size={18} className="text-orange-400" />
+                 <span className="text-xs font-black text-orange-300">{city.level}</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 bg-black/20 p-2 rounded-xl flex-1 border border-white/5">
+                 <Heart size={18} className="text-red-400" />
+                 <span className="text-xs font-black text-red-300">100%</span>
+              </div>
+           </div>
+
+           {/* Resources Grid (From Screenshot) */}
+           <div className="grid grid-cols-4 gap-4 bg-black/40 p-4 rounded-2xl border-2 border-[#111] shadow-inner">
+              <ResourceItem icon={Coins} value={city.resources.gold} color="text-yellow-500" />
+              <ResourceItem icon={Wheat} value={city.resources.wheat} color="text-amber-500" />
+              <ResourceItem icon={Pickaxe} value={city.resources.stone} color="text-gray-400" />
+              <ResourceItem icon={Hammer} value={city.resources.iron} color="text-blue-200" />
+              <ResourceItem icon={Gem} value={city.wealth} color="text-indigo-400" />
+              <ResourceItem icon={Beef} value={city.resources.meat} color="text-red-300" />
+              <ResourceItem icon={Info} value={city.resources.bread} color="text-orange-200" />
+              <ResourceItem icon={Settings} value={city.tradeVolume} color="text-white/40" />
+           </div>
+
+           {/* Details List */}
+           <div className="space-y-3 font-mono text-[11px] uppercase font-bold text-white/70">
+              <div className="flex justify-between border-b border-white/5 pb-1">
+                 <span className="text-orange-400/70">Líder</span>
+                 <span className="text-blue-400 underline decoration-dotted cursor-help">{city.stats.leader}</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-1">
+                 <span className="text-orange-400/70">Cultura</span>
+                 <span className="text-green-400">{city.stats.culture}</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-1">
+                 <span className="text-orange-400/70">Reino</span>
+                 <span className="text-blue-500">{city.stats.kingdom}</span>
+              </div>
+              <div className="flex justify-between pt-2">
+                 <span className="flex items-center gap-2"><Clock size={12} className="text-orange-500" /> Edad de la Aldea</span>
+                 <span className="text-yellow-600">{city.stats.age}</span>
+              </div>
+              <div className="flex justify-between">
+                 <span className="flex items-center gap-2"><Baby size={12} className="text-green-500" /> Nacimientos</span>
+                 <span className="text-yellow-600">{city.stats.births}</span>
+              </div>
+              <div className="flex justify-between">
+                 <span className="flex items-center gap-2"><Skull size={12} className="text-red-500" /> Muertes</span>
+                 <span className="text-yellow-600">{city.stats.deaths}</span>
+              </div>
+              <div className="flex justify-between">
+                 <span className="flex items-center gap-2"><Biohazard size={12} className="text-green-300" /> Infectados</span>
+                 <span className="text-green-300">0</span>
+              </div>
+           </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -28,6 +130,7 @@ export default function App() {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [selectedBiome, setSelectedBiome] = useState<Biome>(Biome.GRASS);
   const [showChronology, setShowChronology] = useState(false);
+  const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
 
   const lastTickRef = useRef<number>(0);
   const requestRef = useRef<number | null>(null);
@@ -180,7 +283,7 @@ export default function App() {
 
         const updatedCities = newCities.map(city => {
           const population = cityPopulations[city.id] || 0;
-          return Engine.updateCity({ ...city, population }, prev.tick).city;
+          return Engine.updateCity({ ...city, population }, prev.tick, prev.grid).city;
         });
 
         return {
@@ -286,10 +389,28 @@ export default function App() {
       {/* Background Canvas */}
       <div className="absolute inset-0 z-0">
          <GameCanvas 
-          grid={gameState.grid} agents={gameState.agents} cities={gameState.cities} fleets={gameState.fleets} tradeRoutes={gameState.tradeRoutes} onTileClick={handleTileClick}
-          editorActive={activeCategory === 'terrain'} interventionActive={activeCategory === 'life'}
+          grid={gameState.grid} 
+          agents={gameState.agents} 
+          cities={gameState.cities} 
+          fleets={gameState.fleets} 
+          tradeRoutes={gameState.tradeRoutes} 
+          onTileClick={handleTileClick}
+          onCityClick={(city) => setSelectedCityId(city?.id || null)}
+          selectedCityId={selectedCityId}
+          editorActive={activeCategory === 'terrain'} 
+          interventionActive={activeCategory === 'life'}
+          inspectActive={activeCategory === 'inspect'}
         />
       </div>
+
+      <AnimatePresence>
+        {selectedCityId && gameState.cities.find(c => c.id === selectedCityId) && (
+          <CityInspector 
+            city={gameState.cities.find(c => c.id === selectedCityId)!} 
+            onClose={() => setSelectedCityId(null)} 
+          />
+        )}
+      </AnimatePresence>
 
       {/* World Stats - Top Left */}
       <div className="absolute top-4 left-4 flex flex-col gap-1 z-20 pointer-events-none">
